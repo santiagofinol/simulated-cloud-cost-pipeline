@@ -1,0 +1,22 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+.env
+
+
+data/raw/
+
+
+models/
+
+
+__pycache__/
+*.pyc
+*.pyo
+
+
+.venv/
+venv/
+env/
+data/raw/
+models/
+.DS_Store
+Thumbs.db

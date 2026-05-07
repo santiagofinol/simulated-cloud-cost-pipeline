@@ -1,0 +1,134 @@
+name: Cloud Cost Pipeline
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  
+  workflow_dispatch:           # allow manual trigger from GitHub UI
+    inputs:
+      backfill_days:
+        description: "Backfill N days of historical data (0 = skip)"
+        required: false
+        default: "0"
+      run_train:
+        description: "Re-train Prophet models after ingestion (true/false)"
+        required: false
+        default: "false"
+
+jobs:
+  pipeline:
+    name: Ingest → Transform → Score
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # ── Setup 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ── Restore model cache between runs 
+      - name: Restore model cache
+        uses: actions/cache@v4
+        with:
+          path: models/
+          key: prophet-models-${{ hashFiles('scripts/train.py') }}-${{ github.run_number }}
+          restore-keys: |
+            prophet-models-${{ hashFiles('scripts/train.py') }}-
+            prophet-models-
+
+      # ── Step 1: Generate / ingest data 
+      - name: Backfill historical data (if requested)
+        if: ${{ github.event.inputs.backfill_days != '0' && github.event.inputs.backfill_days != '' }}
+        run: python scripts/generate_data.py backfill ${{ github.event.inputs.backfill_days }}
+        env:
+          RAW_DATA_DIR: data/raw
+
+      - name: Generate current 30-min batch
+        run: python scripts/generate_data.py
+        env:
+          RAW_DATA_DIR: data/raw
+
+      # ── Step 2: Transform raw JSON → star schema
+      - name: Transform and load to Supabase
+        run: python scripts/transform.py
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          RAW_DATA_DIR: data/raw
+
+      # ── Step 3 (optional): Re-train models
+      - name: Train Prophet models
+        if: ${{ github.event.inputs.run_train == 'true' }}
+        run: python scripts/train.py
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+
+      # ── Step 4: Score — forecast and anomaly detection
+      - name: Run forecasting and anomaly detection
+        run: python scripts/score.py
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+
+      # ── Save model artifact for inspection 
+      - name: Upload model artifact
+        if: ${{ github.event.inputs.run_train == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: prophet-models
+          path: models/prophet_models.pkl
+          retention-days: 30
+
+  # ── Weekly auto-retrain 
+  retrain:
+    name: Weekly Model Retrain
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'schedule'
+
+    # Run only on Sundays at 02:00 UTC
+    # GitHub Actions doesn't support day-of-week in cron
+    # so we gate with a step condition below.
+
+    steps:
+      - name: Check if Sunday
+        id: check_day
+        run: |
+          DAY=$(date +%u)
+          echo "day=$DAY" >> $GITHUB_OUTPUT
+          echo "Today is day $DAY (1=Mon … 7=Sun)"
+
+      - name: Checkout repository
+        if: steps.check_day.outputs.day == '7'
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        if: steps.check_day.outputs.day == '7'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        if: steps.check_day.outputs.day == '7'
+        run: pip install -r requirements.txt
+
+      - name: Retrain Prophet models
+        if: steps.check_day.outputs.day == '7'
+        run: python scripts/train.py
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+
+      - name: Upload retrained models
+        if: steps.check_day.outputs.day == '7'
+        uses: actions/upload-artifact@v4
+        with:
+          name: prophet-models-weekly
+          path: models/prophet_models.pkl
+          retention-days: 90
