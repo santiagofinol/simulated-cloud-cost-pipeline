@@ -6,9 +6,6 @@ Steps:
   1. Load saved Prophet models, generate 4-hour forecasts, write to fact_forecast.
   2. Pull recent 7-day window from fact_cost, run Isolation Forest,
      write anomaly flags + severity to fact_anomaly.
-
-Usage:
-    python scripts/score.py
 """
 
 import os
@@ -88,9 +85,9 @@ def severity_label(score: float, is_anomaly: bool) -> str | None:
         return None
     # Isolation Forest decision_function returns negative scores for anomalies
     
-    if score < -0.15:
+    if score <= -0.15:
         return "high"
-    if score < -0.08:
+    if score <= -0.08:
         return "medium"
     return "low"
 
