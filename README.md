@@ -4,7 +4,7 @@
 > Simulated forecasts expected costs with Prophet, flags anomalies with Isolation Forest,
 > and visualizes everything in a Streamlit dashboard.
 
-
+[![CI Tests](https://github.com/santiagofinol/simulated-cloud-cost-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/santiagofinol/simulated-cloud-cost-pipeline/actions/workflows/ci.yml)
 [![Pipeline](https://github.com/santiagofinol/simulated-cloud-cost-pipeline/actions/workflows/pipeline.yml/badge.svg)](https://github.com/santiagofinol/simulated-cloud-cost-pipeline/actions/workflows/pipeline.yml)
 
 ---
