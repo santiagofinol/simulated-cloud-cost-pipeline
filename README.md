@@ -177,11 +177,15 @@ Dashboard opens with live KPIs, charts, and anomaly tables.
 - Anomalies today (with severity breakdown)
 - MTD variance % (actual vs forecast)
 - Period total cost (with WoW % change)
+  
+<img width="1433" height="470" alt="Screenshot 2026-05-06 182839" src="https://github.com/user-attachments/assets/47a18644-2e45-4a81-be42-8128c0ee84e6" />
+
 
 **Variance Details Expander:**
 - MTD actual vs forecast cost breakdown
 - Yesterday's same-hour cost (DoD diagnostic)
 - Explanations for high variance % (useful for interview discussions)
+  
 
 **Visualizations:**
 - Time-series: Actual costs by service
@@ -190,10 +194,18 @@ Dashboard opens with live KPIs, charts, and anomaly tables.
 - Region distribution (donut chart)
 - Anomaly severity distribution
 
+<img width="1435" height="482" alt="Screenshot 2026-05-06 182900" src="https://github.com/user-attachments/assets/b2b75519-bee1-4145-887d-c9c085ef9410" />
+
+<img width="1449" height="405" alt="Screenshot 2026-05-06 182930" src="https://github.com/user-attachments/assets/9ce6ae94-6f48-4cc3-bbab-203acf296467" />
+
+
 **Data Explorer:**
 - Raw cost data table (expandable)
 - Forecast data table (expandable)
 - Anomaly records with timestamps
+
+<img width="1431" height="336" alt="Screenshot 2026-05-06 182952" src="https://github.com/user-attachments/assets/15bd4362-d930-4350-9315-4ecff2e6cf8d" />
+
 
 **Filters (sidebar):**
 - Multi-select by service and region
